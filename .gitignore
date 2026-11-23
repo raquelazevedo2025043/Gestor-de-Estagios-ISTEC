@@ -1,0 +1,50 @@
+# Ficheiros sensíveis
+.env
+.env.backup
+.env.production
+auth.json
+/storage/*.key
+
+# Dependências e ficheiros gerados
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+/storage/pail
+.phpunit.result.cache
+/.phpunit.cache
+*.log
+
+# Base de dados local
+database/*.sqlite
+database/*.sqlite-journal
+
+# Editores e sistema operativo
+/.vscode
+/.idea
+/.nova
+/.zed
+/.cursor/
+/.codex
+.phpactor.json
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+.DS_Store
+Thumbs.db
+
+# Ferramentas de IA
+/.claude
+/.cursor/
+/.codex
+/.junie
+/.gemini
+.cursorrules
+.windsurfrules
+.mcp.json
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+boost.json
