@@ -12,10 +12,16 @@ auth.json
 /public/hot
 /public/storage
 /public/fonts-manifest.dev.json
+/bootstrap/ssr
 /storage/pail
 .phpunit.result.cache
 /.phpunit.cache
 *.log
+
+# Gerados pelo Wayfinder
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
 
 # Base de dados local
 database/*.sqlite
