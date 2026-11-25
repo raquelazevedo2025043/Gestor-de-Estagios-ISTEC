@@ -13,33 +13,43 @@ use Illuminate\Support\Str;
 class UserFactory extends Factory
 {
     /**
-     * The current password being used by the factory.
+     * Password partilhada por todos os utilizadores criados.
      */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Valores por defeito de um utilizador.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'nome' => fake()->name(),
+            'email' => fake()->unique()->userName() . '@my.istec.pt',
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'roles' => ['aluno'],
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Define os papéis do utilizador.
      */
-    public function unverified(): static
+    public function comRoles(string ...$roles): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+        return $this->state(fn(array $attributes) => [
+            'roles' => $roles,
+        ]);
+    }
+
+    /**
+     * Cria o utilizador com a conta desativada.
+     */
+    public function desativado(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'desativado_em' => now(),
         ]);
     }
 }
