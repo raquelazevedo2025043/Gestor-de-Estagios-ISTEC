@@ -39,7 +39,11 @@ return new class extends Migration {
             $table->integer('id')->generatedAs()->primary();
             $table->string('nome', 150);
             $table->string('email', 150);
+            $table->timestamp('email_verified_at', 6)->nullable();
             $table->string('password');
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->rememberToken();
             $table->jsonb('roles');
             $table->timestamp('created_at', 6)->default(DB::raw("(now() at time zone 'utc')"));

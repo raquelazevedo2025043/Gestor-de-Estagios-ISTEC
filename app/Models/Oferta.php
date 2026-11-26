@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['monitor_id', 'titulo', 'descricao', 'requisitos', 'duracao_semanas', 'localizacao', 'vagas'])]
+#[Fillable(['monitor_id', 'area_id', 'titulo', 'descricao', 'requisitos', 'duracao_semanas', 'localizacao', 'regime', 'vagas'])]
 class Oferta extends Model
 {
     protected $table = 'ofertas';
@@ -16,6 +16,7 @@ class Oferta extends Model
     protected $attributes = [
         'vagas' => 1,
         'estado' => 'rascunho',
+        'regime' => 'presencial',
     ];
 
     public function empresa(): BelongsTo
@@ -26,6 +27,11 @@ class Oferta extends Model
     public function monitor(): BelongsTo
     {
         return $this->belongsTo(Monitor::class, 'monitor_id');
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class, 'area_id');
     }
 
     // Sem nenhum curso = para qualquer curso

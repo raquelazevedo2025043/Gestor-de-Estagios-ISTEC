@@ -15,11 +15,13 @@ return new class extends Migration {
             $table->integer('id')->generatedAs()->primary();
             $table->integer('empresa_id');
             $table->integer('monitor_id')->nullable();
+            $table->integer('area_id');
             $table->string('titulo', 150);
             $table->text('descricao')->nullable();
             $table->text('requisitos')->nullable();
             $table->integer('duracao_semanas')->nullable();
             $table->string('localizacao', 150)->nullable();
+            $table->string('regime', 20)->default('presencial');
             $table->integer('vagas')->default(1);
             $table->string('estado', 20)->default('rascunho');
             $table->timestamp('created_at', 6)->default(DB::raw("(now() at time zone 'utc')"));
@@ -28,9 +30,11 @@ return new class extends Migration {
             $table->foreign('empresa_id', 'fk_ofertas_empresa')->references('user_id')->on('empresas');
             $table->foreign(['monitor_id', 'empresa_id'], 'fk_ofertas_monitor')
                 ->references(['user_id', 'empresa_id'])->on('monitores');
+            $table->foreign('area_id', 'fk_ofertas_area')->references('id')->on('areas');
 
             $table->index('empresa_id', 'ix_ofertas_empresa');
             $table->index('monitor_id', 'ix_ofertas_monitor');
+            $table->index('area_id', 'ix_ofertas_area');
             $table->index('estado', 'ix_ofertas_estado');
         });
 
@@ -38,6 +42,7 @@ return new class extends Migration {
         ALTER TABLE ofertas
           ADD CONSTRAINT ck_ofertas_duracao CHECK (duracao_semanas > 0),
           ADD CONSTRAINT ck_ofertas_vagas CHECK (vagas > 0),
+          ADD CONSTRAINT ck_ofertas_regime CHECK (regime IN ('presencial','remoto','hibrido')),
           ADD CONSTRAINT ck_ofertas_estado CHECK (estado IN ('rascunho','publicada','encerrada','cancelada'));
         SQL);
     }
