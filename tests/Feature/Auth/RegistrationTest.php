@@ -5,6 +5,8 @@ namespace Tests\Feature\Auth;
 use App\Models\Empresa;
 use App\Models\User;
 use App\Notifications\DefinirPalavraPasse;
+use App\Notifications\EmpresaAprovada;
+use App\Notifications\EmpresaRejeitada;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -119,11 +121,16 @@ class RegistrationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_rejected_empresa_cannot_log_in()
+    public function test_rejected_empresa_cannot_log_in_and_receives_the_reason_by_email()
     {
-        [$conta] = $this->registar();
+        Notification::fake();
+
+        [$conta, $responsavel] = $this->registar();
 
         Empresa::findOrFail($conta->id)->rejeitar($this->coordenacao(), 'NIF inválido.');
+
+        Notification::assertSentTo($conta, EmpresaRejeitada::class, fn (EmpresaRejeitada $n) => $n->justificacao === 'NIF inválido.');
+        Notification::assertNothingSentTo($responsavel);
 
         $this->entrar('geral@tecnoporto.pt')->assertSessionHasErrors([
             'email' => 'O registo da empresa foi rejeitado pela coordenação: NIF inválido.',
@@ -132,12 +139,14 @@ class RegistrationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_approved_empresa_can_log_in_and_receives_verification_email()
+    public function test_approved_empresa_is_notified_and_can_log_in()
     {
         Notification::fake();
 
         [$conta] = $this->registar();
         Empresa::findOrFail($conta->id)->aprovar($this->coordenacao());
+
+        Notification::assertSentTo($conta, EmpresaAprovada::class);
 
         $this->entrar('geral@tecnoporto.pt')->assertRedirect(route('dashboard', absolute: false));
 

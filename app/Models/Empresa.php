@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Notifications\DefinirPalavraPasse;
+use App\Notifications\EmpresaAprovada;
+use App\Notifications\EmpresaRejeitada;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,7 +57,7 @@ class Empresa extends Model
         return $this->hasMany(Oferta::class, 'empresa_id');
     }
 
-    // aprova a empresa e envia ao responsável o email para definir a palavra-passe
+    // aprova a empresa, avisa-a por email e envia ao responsável o email para definir a palavra-passe
     public function aprovar(User $coordenador): void
     {
         $this->forceFill([
@@ -65,6 +67,8 @@ class Empresa extends Model
             'data_validacao' => now(),
         ])->save();
 
+        $this->user?->notify(new EmpresaAprovada);
+
         $responsavel = $this->responsavel?->user;
 
         if ($responsavel) {
@@ -73,7 +77,7 @@ class Empresa extends Model
         }
     }
 
-    // a justificação é obrigatória (RF13)
+    // a justificação é obrigatória (RF13) e é enviada à empresa por email
     public function rejeitar(User $coordenador, string $justificacao): void
     {
         $this->forceFill([
@@ -82,5 +86,7 @@ class Empresa extends Model
             'validado_por' => $coordenador->id,
             'data_validacao' => now(),
         ])->save();
+
+        $this->user?->notify(new EmpresaRejeitada($justificacao));
     }
 }
