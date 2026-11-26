@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('nome', 150);
             $table->string('morada')->nullable();
             $table->string('telefone', 20)->nullable();
+            $table->string('area_atividade', 100)->nullable();
             $table->string('estado_validacao', 20)->default('pendente');
             $table->text('justificacao_rejeicao')->nullable();
             $table->integer('responsavel_id')->nullable(); // a fk é criada na migração de monitores

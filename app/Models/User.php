@@ -41,6 +41,51 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->desativado_em === null;
     }
 
+    /**
+     * Motivo pelo qual o utilizador não pode entrar, ou null se pode.
+     */
+    public function motivoBloqueio(): ?string
+    {
+        if (! $this->estaAtivo()) {
+            return 'Esta conta está desativada.';
+        }
+
+        if ($this->temRole('empresa')) {
+            $empresa = $this->empresa;
+
+            if ($empresa?->estado_validacao === 'pendente') {
+                return 'A tua empresa ainda está a aguardar aprovação da coordenação.';
+            }
+
+            if ($empresa?->estado_validacao === 'rejeitada') {
+                return 'O registo da empresa foi rejeitado pela coordenação: '.$empresa->justificacao_rejeicao;
+            }
+        }
+
+        if ($this->temRole('monitor')) {
+            $empresa = $this->monitor?->empresa;
+
+            if ($empresa && $empresa->estado_validacao !== 'aprovada') {
+                return 'A empresa ainda não foi aprovada pela coordenação.';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Quem ainda não pode entrar não recebe o email de verificação,
+     * porque o link só funciona com sessão iniciada.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        if ($this->motivoBloqueio() !== null) {
+            return;
+        }
+
+        parent::sendEmailVerificationNotification();
+    }
+
     public function aluno(): HasOne
     {
         return $this->hasOne(Aluno::class, 'user_id');

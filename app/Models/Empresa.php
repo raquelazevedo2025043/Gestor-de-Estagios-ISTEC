@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Notifications\DefinirPalavraPasse;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Password;
 
-#[Fillable(['nif', 'nome', 'morada', 'telefone'])]
+#[Fillable(['nif', 'nome', 'morada', 'telefone', 'area_atividade'])]
 class Empresa extends Model
 {
     protected $table = 'empresas';
@@ -31,13 +33,13 @@ class Empresa extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Monitor responsável pela empresa
+    // monitor responsável pela empresa
     public function responsavel(): BelongsTo
     {
         return $this->belongsTo(Monitor::class, 'responsavel_id');
     }
 
-    // Membro da coordenação que aprovou ou rejeitou
+    // membro da coordenação que aprovou ou rejeitou
     public function validador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'validado_por');
@@ -51,5 +53,34 @@ class Empresa extends Model
     public function ofertas(): HasMany
     {
         return $this->hasMany(Oferta::class, 'empresa_id');
+    }
+
+    // aprova a empresa e envia ao responsável o email para definir a palavra-passe
+    public function aprovar(User $coordenador): void
+    {
+        $this->forceFill([
+            'estado_validacao' => 'aprovada',
+            'justificacao_rejeicao' => null,
+            'validado_por' => $coordenador->id,
+            'data_validacao' => now(),
+        ])->save();
+
+        $responsavel = $this->responsavel?->user;
+
+        if ($responsavel) {
+            $token = Password::broker()->createToken($responsavel);
+            $responsavel->notify(new DefinirPalavraPasse($token, $this->nome));
+        }
+    }
+
+    // a justificação é obrigatória (RF13)
+    public function rejeitar(User $coordenador, string $justificacao): void
+    {
+        $this->forceFill([
+            'estado_validacao' => 'rejeitada',
+            'justificacao_rejeicao' => $justificacao,
+            'validado_por' => $coordenador->id,
+            'data_validacao' => now(),
+        ])->save();
     }
 }

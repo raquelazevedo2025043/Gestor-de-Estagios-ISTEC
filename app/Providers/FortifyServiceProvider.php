@@ -2,14 +2,20 @@
 
 namespace App\Providers;
 
+use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\RegistoSubmetidoResponse;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -20,7 +26,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // depois do registo a empresa não fica com sessão iniciada
+        $this->app->singleton(RegisterResponse::class, RegistoSubmetidoResponse::class);
     }
 
     /**
@@ -39,6 +46,24 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+        Fortify::createUsersUsing(CreateNewUser::class);
+
+        // empresas por aprovar, rejeitadas e contas desativadas não entram
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $user = User::query()
+                ->whereRaw('lower(email) = ?', [Str::lower((string) $request->input(Fortify::username()))])
+                ->first();
+
+            if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
+                return null;
+            }
+
+            if ($motivo = $user->motivoBloqueio()) {
+                throw ValidationException::withMessages([Fortify::username() => $motivo]);
+            }
+
+            return $user;
+        });
     }
 
     /**
@@ -63,6 +88,10 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
             'status' => $request->session()->get('status'),
+        ]));
+
+        Fortify::registerView(fn () => Inertia::render('auth/register', [
+            'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ]));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
