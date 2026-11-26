@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Aluno;
+use App\Models\Area;
 use App\Models\Candidatura;
 use App\Models\Curso;
 use App\Models\Empresa;
@@ -84,11 +85,11 @@ class DatabaseSeeder extends Seeder
         $this->criarAluno('Eva Santos', 'demo.eva.santos@my.istec.pt', '20250001', $robotica, 1);
 
         // ofertas (sem cursos = para qualquer curso)
-        $web = $this->criarOferta($techNova, $joao, 'Programador Web Laravel', 'publicada', [$software, $moveis, $multimedia, $design]);
-        $testes = $this->criarOferta($techNova, $joao, 'Testes de Software', 'publicada', [$software, $gestao]);
-        $sistemas = $this->criarOferta($redeSegura, $ines, 'Administração de Redes', 'publicada', [$ciberseguranca, $software]);
-        $suporte = $this->criarOferta($redeSegura, $ines, 'Suporte Técnico', 'publicada', []);
-        $this->criarOferta($redeSegura, $ines, 'Análise de Segurança', 'rascunho', [$ciberseguranca]);
+        $web = $this->criarOferta($techNova, $joao, 'Programador Web Laravel', 'Desenvolvimento web (back-end)', 'hibrido', 'publicada', [$software, $moveis, $multimedia, $design]);
+        $testes = $this->criarOferta($techNova, $joao, 'Testes de Software', 'Testes e qualidade (QA)', 'presencial', 'publicada', [$software, $gestao]);
+        $sistemas = $this->criarOferta($redeSegura, $ines, 'Administração de Redes', 'Redes e infraestruturas', 'presencial', 'publicada', [$ciberseguranca, $software]);
+        $suporte = $this->criarOferta($redeSegura, $ines, 'Suporte Técnico', 'Suporte técnico / helpdesk', 'presencial', 'publicada', []);
+        $this->criarOferta($redeSegura, $ines, 'Análise de Segurança', 'Segurança (SOC, auditoria)', 'remoto', 'rascunho', [$ciberseguranca]);
 
         // ana: estágio em curso, ao aceitar, o trigger cancela a outra candidatura ativa dela
         $this->criarCandidatura($ana, $suporte, 'submetida', 30);
@@ -195,15 +196,17 @@ class DatabaseSeeder extends Seeder
     /**
      * @param  array<int, Curso>  $cursos
      */
-    private function criarOferta(Empresa $empresa, Monitor $monitor, string $titulo, string $estado, array $cursos): Oferta
+    private function criarOferta(Empresa $empresa, Monitor $monitor, string $titulo, string $area, string $regime, string $estado, array $cursos): Oferta
     {
         $oferta = $empresa->ofertas()->make([
             'monitor_id' => $monitor->user_id,
+            'area_id' => Area::where('nome', $area)->value('id'),
             'titulo' => $titulo,
             'descricao' => "Estágio curricular: {$titulo}.",
             'requisitos' => 'Vontade de aprender e trabalho em equipa.',
             'duracao_semanas' => 12,
             'localizacao' => $empresa->morada,
+            'regime' => $regime,
             'vagas' => 2,
         ]);
         $oferta->estado = $estado;

@@ -7,6 +7,7 @@ return new class extends Migration {
 
     private array $tabelas = [
         'cursos',
+        'areas',
         'users',
         'alunos',
         'professores',
